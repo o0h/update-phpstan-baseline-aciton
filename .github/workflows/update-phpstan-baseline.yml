@@ -1,0 +1,36 @@
+name: "phpstan-ci:update-baseline"
+
+on: workflow_dispatch
+
+jobs:
+  update_baseline:
+    name: Update baseline files
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: latest
+          tools: composer
+          coverage: none
+
+      - name: Composer install
+        run: |
+          composer install
+
+      - name: Update Baselines
+        run: php bin/test.php
+
+      - name: Commit new files
+        id: git-update
+        run: |
+          git config --local user.name "${GITHUB_ACTOR}(GitHub Actions)"
+          git config --local user.email "${GITHUB_ACTOR}+github-actions@users.noreply.github.com"
+          git add .
+          git commit -m"phpstan-ci:update-baseline"
+          git push origin ${GITHUB_REF_NAME}
