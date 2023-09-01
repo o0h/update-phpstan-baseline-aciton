@@ -24,7 +24,7 @@ jobs:
           composer install
 
       - name: Update Baselines
-        run: php bin/test.php
+        run: php bin/update-baseline.php
 
       - name: Commit new files
         id: git-update
