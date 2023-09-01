@@ -1,0 +1,20 @@
+{
+    "name": "o0h/update-phpstan-baseline-aciton",
+    "type": "library",
+    "require-dev": {
+        "phpstan/phpstan": "@stable"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "O0h\\UpdatePhpstanBaselineAction\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "o0h",
+            "email": "dev@o0h.in"
+        }
+    ],
+    "require": {}
+}
