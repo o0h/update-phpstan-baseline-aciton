@@ -1,38 +1,36 @@
-name: "/update-phpstan-baseline"
-on:
-  issue_comment:
-    types: [created, edited]
+name: "phpstan-ci:update-baseline"
+
+on: workflow_dispatch
+
 jobs:
   update_baseline:
-    name: "Update Baseline files"
-    if: contains(github.event.comment.html_url, '/pull/') && startsWith(github.event.comment.body, '/update-phpstan-baseline')
-    runs-on: [ubuntu-latest]
+    name: Update baseline files
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - name: get upstream branch
-        id: upstreambranch
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "::set-output name=branchname::$(curl -H "Authorization: token ${GITHUB_TOKEN}" ${{ github.event.issue.pull_request.url }} | jq '.head.ref' | sed 's/\"//g')"
+      - name: Checkout
+        uses: actions/checkout@v3
 
-      - name: Checkout upstream repo
-        uses: actions/checkout@v2
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
         with:
-          ref: ${{ steps.upstreambranch.outputs.branchname }}
-            - id: ls
-              run: ls
+          php-version: latest
+          tools: composer
+          coverage: none
 
-        - name: ls message
-          uses: actions/github-script@0.9.0
-          if: steps.ls.outputs.exitcode == 0
-          env:
-            STDOUT: "```${{ steps.ls.outputs.stdout }}```"
-          with:
-            github-token: ${{secrets.GITHUB_TOKEN}}
-            script: |
-              github.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: "#### `ls` Success\n" + process.env.STDOUT
-              })
+      - name: Composer install
+        run: |
+          composer install
+
+      - name: Update Baselines
+        run: php bin/test.php
+
+      - name: Commit new files
+        id: git-update
+        run: |
+          git config --local user.name "${GITHUB_ACTOR}(GitHub Actions)"
+          git config --local user.email "${GITHUB_ACTOR}+github-actions@users.noreply.github.com"
+          git add .
+          git commit -m"phpstan-ci:update-baseline"
+          git push origin ${GITHUB_REF_NAME}
